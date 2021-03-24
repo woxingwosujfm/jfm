@@ -493,7 +493,7 @@ function shareUrl() {
         if (data['code'] === 200) {
           $.shareId.push(data['data']);
           console.log(`\n【京东账号${$.index}（${$.nickName || $.UserName}）的${$.name}好友互助码】${data['data']}\n`);
-          await $.http.get({url: `https://code.chiang.fun/autocommit/mohe/insert/${data['data']}`, timeout: 10000}).then((resp) => {
+          await $.http.get({url: `https://code.chiun/autocommit/mohe/insert/${data['data']}`, timeout: 10000}).then((resp) => {
             // console.log('resp', resp)
             if (resp.statusCode === 200) {
               try {
