@@ -34,7 +34,7 @@ if ($.isNode()) {
 
 const JD_API_HOST = 'https://isp5g.m.jd.com';
 //邀请码可能一天一变化，先测试
-$.shareId = ["",""];
+$.shareId = ["8051f482-5619-47d3-8d2e-7b49a1c1675e","27352a8c-365c-408f-83d4-175daeb147f0"];
 !(async () => {
   if (!cookiesArr[0]) {
     $.msg($.name, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/bean/signIndex.action', {"open-url": "https://bean.m.jd.com/bean/signIndex.action"});
@@ -80,7 +80,7 @@ $.shareId = ["",""];
     cookie = cookiesArr[v];
     $.index = v + 1;
     $.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1]);
-    await $.http.get({url: `https://code.ng.fun//api/v1/jd/mohe/read/10`, timeout: 10000}).then(async (resp) => {
+    await $.http.get({url: `https://code.chiang.fun//api/v1/jd/mohe/read/10`, timeout: 10000}).then(async (resp) => {
       if (resp.statusCode === 200) {
         try {
           let { body } = resp;
@@ -493,7 +493,7 @@ function shareUrl() {
         if (data['code'] === 200) {
           $.shareId.push(data['data']);
           console.log(`\n【京东账号${$.index}（${$.nickName || $.UserName}）的${$.name}好友互助码】${data['data']}\n`);
-          await $.http.get({url: `https://code.chiun/autocommit/mohe/insert/${data['data']}`, timeout: 10000}).then((resp) => {
+          await $.http.get({url: `https://code.chiang.fun/autocommit/mohe/insert/${data['data']}`, timeout: 10000}).then((resp) => {
             // console.log('resp', resp)
             if (resp.statusCode === 200) {
               try {
