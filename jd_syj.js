@@ -85,6 +85,7 @@ function showMsg() {
     resolve()
   })
 }
+//================赚京豆-签到领京豆===================
 let signFlag = 0;
 function userSignIn() {
   return new Promise(resolve => {
@@ -105,11 +106,11 @@ function userSignIn() {
                 message += `【第${alreadySignDays}日签到】成功，获得${todayPrize.beanAmount}京豆 🐶\n`;
                 if (alreadySignDays === 7) alreadySignDays = 0;
                 message += `【明日签到】可获得${eachDayPrize[alreadySignDays].beanAmount}京豆 🐶\n`;
-                message += `【累计获得】${beanTotalNum}京豆 🐶\n`;
+                message += `【累计获得】${beanTotalNum}京豆 🐶`;
               }
             } else if (data.code === 81) {
-              console.log(`今日已签到`)
-              message += `【签到】失败，今日已签到`;
+              console.log(`【签到】失败，今日已签到`)
+              // message += `【签到】失败，今日已签到`;
             } else if (data.code === 6) {
               //此处有时会遇到 服务器繁忙 导致签到失败,故重复三次签到
               $.log(`${$.name}签到失败${signFlag}:${data.msg}`);
