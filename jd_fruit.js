@@ -358,28 +358,6 @@ async function doTenWaterAgain() {
       console.log(`您目前水滴:${totalEnergy}g,水滴换豆卡${$.myCardInfoRes.beanCard}张,暂不满足水滴换豆的条件,为您继续浇水`)
     }
   }
-  // if (Date.now() < new Date(activeEndTime).getTime()) {
-  //   if (totalEnergy >= 100 && $.myCardInfoRes.beanCard > 0) {
-  //     //使用水滴换豆卡
-  //     await userMyCardForFarm('beanCard');
-  //     console.log(`使用水滴换豆卡结果:${JSON.stringify($.userMyCardRes)}`);
-  //     if ($.userMyCardRes.code === '0') {
-  //       message += `【水滴换豆卡】获得${$.userMyCardRes.beanCount}个京豆\n`;
-  //     }
-  //   }
-  //   return
-  // }
-  // if (totalEnergy > 100 && $.myCardInfoRes.fastCard > 0) {
-  //   //使用快速浇水卡
-  //   await userMyCardForFarm('fastCard');
-  //   console.log(`使用快速浇水卡结果:${JSON.stringify($.userMyCardRes)}`);
-  //   if ($.userMyCardRes.code === '0') {
-  //     console.log(`已使用快速浇水卡浇水${$.userMyCardRes.waterEnergy}g`);
-  //   }
-  //   await initForFarm();
-  //   totalEnergy  = $.farmInfo.farmUserPro.totalEnergy;
-  // }
-  // 所有的浇水(10次浇水)任务，获取水滴任务完成后，如果剩余水滴大于等于60g,则继续浇水(保留部分水滴是用于完成第二天的浇水10次的任务)
 //领取阶段性水滴奖励
 function gotStageAward() {
   return new Promise(async resolve => {
