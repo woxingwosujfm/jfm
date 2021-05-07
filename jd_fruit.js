@@ -34,7 +34,7 @@ let shareCodes = [ // 这个列表填入你要助力的好友的shareCode
   'caaa869cc54644d8b7d2b4a5ec86cc9e@46f5651053984635b3ce2bc026438559@caaa869cc54644d8b7d43232b4a5ec86cc9e',
 ]
 let message = '', subTitle = '', option = {}, isFruitFinished = false;
-const retainWater=20000;//保留水滴大于多少g,默认100g;
+const retainWater=10000;//保留水滴大于多少g,默认100g;
 let jdNotify = false;//是否关闭通知，false打开通知推送，true关闭通知推送
 let jdFruitBeanCard = false;//农场使用水滴换豆卡(如果出现限时活动时100g水换20豆,此时比浇水划算,推荐换豆),true表示换豆(不浇水),false表示不换豆(继续浇水),脚本默认是浇水
 let randomCount = 20;
@@ -358,6 +358,68 @@ async function doTenWaterAgain() {
       console.log(`您目前水滴:${totalEnergy}g,水滴换豆卡${$.myCardInfoRes.beanCard}张,暂不满足水滴换豆的条件,为您继续浇水`)
     }
   }
+  // if (Date.now() < new Date(activeEndTime).getTime()) {
+  //   if (totalEnergy >= 100 && $.myCardInfoRes.beanCard > 0) {
+  //     //使用水滴换豆卡
+  //     await userMyCardForFarm('beanCard');
+  //     console.log(`使用水滴换豆卡结果:${JSON.stringify($.userMyCardRes)}`);
+  //     if ($.userMyCardRes.code === '0') {
+  //       message += `【水滴换豆卡】获得${$.userMyCardRes.beanCount}个京豆\n`;
+  //     }
+  //   }
+  //   return
+  // }
+  // if (totalEnergy > 100 && $.myCardInfoRes.fastCard > 0) {
+  //   //使用快速浇水卡
+  //   await userMyCardForFarm('fastCard');
+  //   console.log(`使用快速浇水卡结果:${JSON.stringify($.userMyCardRes)}`);
+  //   if ($.userMyCardRes.code === '0') {
+  //     console.log(`已使用快速浇水卡浇水${$.userMyCardRes.waterEnergy}g`);
+  //   }
+  //   await initForFarm();
+  //   totalEnergy  = $.farmInfo.farmUserPro.totalEnergy;
+  // }
+  // 所有的浇水(10次浇水)任务，获取水滴任务完成后，如果剩余水滴大于等于60g,则继续浇水(保留部分水滴是用于完成第二天的浇水10次的任务)
+    if (isFruitFinished) {
+      option['open-url'] = urlSchema;
+      $.msg($.name, `【提醒⏰】${$.farmInfo.farmUserPro.name}已可领取`, '请去京东APP或微信小程序查看\n点击弹窗即达', option);
+      $.done();
+      if ($.isNode()) {
+        await notify.sendNotify(`${$.name} - 账号${$.index} - ${$.nickName}水果已可领取`, `京东账号${$.index} ${$.nickName}\n${$.farmInfo.farmUserPro.name}已可领取`);
+      }
+    }
+  } else if (overageEnergy >= 10) {
+    console.log("目前剩余水滴：【" + totalEnergy + "】g，可继续浇水");
+    isFruitFinished = false;
+    for (let i = 0; i < parseInt(overageEnergy / 10); i++) {
+      await waterGoodForFarm();
+      console.log(`本次浇水结果:   ${JSON.stringify($.waterResult)}`);
+      if ($.waterResult.code === '0') {
+        console.log(`\n浇水10g成功,剩余${$.waterResult.totalEnergy}\n`)
+        if ($.waterResult.finished) {
+          // 已证实，waterResult.finished为true，表示水果可以去领取兑换了
+          isFruitFinished = true;
+          break
+        } else {
+          await gotStageAward()
+        }
+      } else {
+        console.log('浇水出现失败异常,跳出不在继续浇水')
+        break;
+      }
+    }
+    if (isFruitFinished) {
+      option['open-url'] = urlSchema;
+      $.msg($.name, `【提醒⏰】${$.farmInfo.farmUserPro.name}已可领取`, '请去京东APP或微信小程序查看\n点击弹窗即达', option);
+      $.done();
+      if ($.isNode()) {
+        await notify.sendNotify(`${$.name} - 账号${$.index} - ${$.nickName}水果已可领取`, `京东账号${$.index} ${$.nickName}\n${$.farmInfo.farmUserPro.name}已可领取`);
+      }
+    }
+  } else {
+    console.log("目前剩余水滴：【" + totalEnergy + "】g,不再继续浇水,保留部分水滴用于完成第二天【十次浇水得水滴】任务")
+  }
+}
 //领取阶段性水滴奖励
 function gotStageAward() {
   return new Promise(async resolve => {
