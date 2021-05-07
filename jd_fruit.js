@@ -34,7 +34,7 @@ let shareCodes = [ // 这个列表填入你要助力的好友的shareCode
   'caaa869cc54644d8b7d2b4a5ec86cc9e@46f5651053984635b3ce2bc026438559@caaa869cc54644d8b7d43232b4a5ec86cc9e',
 ]
 let message = '', subTitle = '', option = {}, isFruitFinished = false;
-const retainWater=10000;//保留水滴大于多少g,默认100g;
+const retainWater=200000;//保留水滴大于多少g,默认100g;
 let jdNotify = false;//是否关闭通知，false打开通知推送，true关闭通知推送
 let jdFruitBeanCard = false;//农场使用水滴换豆卡(如果出现限时活动时100g水换20豆,此时比浇水划算,推荐换豆),true表示换豆(不浇水),false表示不换豆(继续浇水),脚本默认是浇水
 let randomCount = 20;
@@ -381,17 +381,17 @@ async function doTenWaterAgain() {
   // }
   // 所有的浇水(10次浇水)任务，获取水滴任务完成后，如果剩余水滴大于等于60g,则继续浇水(保留部分水滴是用于完成第二天的浇水10次的任务)
   let overageEnergy = totalEnergy - retainWater;
-  if (totalEnergy >= ($.farmInfo.farmUserPro.treeTotalEnergy - $.farmInfo.farmUserPro.treeEnergy)) {
+  if (totalEnergy >= ($.farmInfo.farmUserPro.treeTotalEnergy + $.farmInfo.farmUserPro.treeEnergy)) {
     //如果现有的水滴，大于水果可兑换所需的对滴(也就是把水滴浇完，水果就能兑换了)
-    isFruitFinished = true;
-    for (let i = 0; i < ($.farmInfo.farmUserPro.treeTotalEnergy - $.farmInfo.farmUserPro.treeEnergy) / 10; i++) {
+    isFruitFinished = false;
+    for (let i = 0; i < ($.farmInfo.farmUserPro.treeTotalEnergy + $.farmInfo.farmUserPro.treeEnergy) / 100000000; i++) {
       await waterGoodForFarm();
       console.log(`本次浇水结果(水果马上就可兑换了):   ${JSON.stringify($.waterResult)}`);
       if ($.waterResult.code === '0') {
         console.log('\n浇水10g成功\n');
         if ($.waterResult.finished) {
           // 已证实，waterResult.finished为true，表示水果可以去领取兑换了
-          isFruitFinished = flase;
+          isFruitFinished = true;
           break
         } else {
           console.log(`目前水滴【${$.waterResult.totalEnergy}】g,继续浇水，水果马上就可以兑换了`)
