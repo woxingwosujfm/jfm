@@ -13,13 +13,14 @@ cron "0 0-23/1 * * *" script-path=https://gitee.com/lxk0301/jd_scripts/raw/maste
 ===================================Surge================================
 城城领现金 = type=cron,cronexp="0 0-23/1 * * *",wake-system=1,timeout=3600,script-path=https://gitee.com/lxk0301/jd_scripts/raw/master/jd_city.js
 ====================================小火箭=============================
-城城领现金 = type=cron,script-path=https://gitee.com/lxk0301/jd_scripts/raw/master/jd_city.js, cronexpr="0 0-23/1 * * *", timeout=3600, enable=true
+城城领现金 = type=cron,script-path=https://jdsharedresourcescdn.azureedge.net/jdresource/jd_city.js, cronexpr="0 0-23/1 * * *", timeout=3600, enable=true
  */
 const $ = new Env('城城领现金');
 const notify = $.isNode() ? require('./sendNotify') : '';
 //Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
-
+//自动抽奖 ，环境变量  JD_CITY_EXCHANGE
+let exchangeFlag = $.getdata('jdJxdExchange') || !!0;//是否开启自动抽奖，建议活动快结束开启，默认关闭
 //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [], cookie = '', message;
 
@@ -33,8 +34,8 @@ if ($.isNode()) {
 }
 const JD_API_HOST = 'https://api.m.jd.com/client.action';
 let inviteCodes = [
-  'RtGKz7qiQwyiK9bMF9c21EjHpB8McFsQoe3P5bV5dkW8ROKiUg',
-  'RtGKz7qiQwyiK9bMF9c21EjHpB8McFsQoe3P5bV5dkW8ROKiUg',
+  'xBd-HlYMlLUzqSkuz0qzAzuayqOG3FfAIeOTGLowr29_KbnH2bV4EX4@RtGKzr_wSAn2eIKZRdRm07jvOMS2zVH-g8ri6aOIZPDcI8v7CA',
+  'xBd-HlYMlLUzqSkuz0qzAzuayqOG3FfAIeOTGLowr29_KbnH2bV4EX4@RtGKzr_wSAn2eIKZRdRm07jvOMS2zVH-g8ri6aOIZPDcI8v7CA'
 ]
 !(async () => {
   if (!cookiesArr[0]) {
@@ -42,10 +43,15 @@ let inviteCodes = [
     return;
   }
   await requireConfig();
+  if (exchangeFlag) {
+    console.log(`脚本自动抽奖`)
+  } else {
+    console.log(`脚本不会自动抽奖，建议活动快结束开启，默认关闭(在6.2日自动开启抽奖),如需自动抽奖请设置环境变量  JD_CITY_EXCHANGE 为true`);
+  }
   for (let i = 0; i < cookiesArr.length; i++) {
     if (cookiesArr[i]) {
       cookie = cookiesArr[i];
-      $.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
+      $.UserName = decodeURIComponent(cookie.match(/pt_pin=([^; ]+)(?=;?)/) && cookie.match(/pt_pin=([^; ]+)(?=;?)/)[1])
       $.index = i + 1;
       $.isLogin = true;
       $.nickName = '';
@@ -63,14 +69,43 @@ let inviteCodes = [
       await shareCodesFormat()
       await getInfo('',true);
       for (let i = 0; i < $.newShareCodes.length; ++i) {
+        console.log(`\n开始助力 【${$.newShareCodes[i]}】`)
         let res = await getInfo($.newShareCodes[i])
-        if ((res['status'] && res['status'] === '3') || (res.data && res.data.bizCode === -11)) {
+        if (res && res['data'] && res['data']['bizCode'] === 0) {
+          if (res['data']['result']['toasts'] && res['data']['result']['toasts'][0] && res['data']['result']['toasts'][0]['status'] === '3') {
+            console.log(`助力次数已耗尽，跳出`)
+            break
+          }
+          if (res['data']['result']['toasts'] && res['data']['result']['toasts'][0]) {
+            console.log(`助力 【${$.newShareCodes[i]}】:${res.data.result.toasts[0].msg}`)
+          }
+        }
+        if ((res && res['status'] && res['status'] === '3') || (res && res.data && res.data.bizCode === -11)) {
           // 助力次数耗尽 || 黑号
           break
         }
       }
       await getInviteInfo();//雇佣
-      await city_lotteryAward();//抽奖
+      if (exchangeFlag) {
+        const res = await city_lotteryAward();//抽奖
+        if (res && res > 0) {
+          for (let i = 0; i < new Array(res).fill('').length; i++) {
+            await $.wait(1000)
+            await city_lotteryAward();//抽奖
+          }
+        }
+      } else {
+        //默认6.2开启抽奖
+        if ((new Date().getMonth()  + 1) === 6 && new Date().getDate() >= 2) {
+          const res = await city_lotteryAward();//抽奖
+          if (res && res > 0) {
+            for (let i = 0; i < new Array(res).fill('').length; i++) {
+              await $.wait(1000)
+              await city_lotteryAward();//抽奖
+            }
+          }
+        }
+      }
       await $.wait(1000)
     }
   }
@@ -91,14 +126,14 @@ function taskPostUrl(functionId,body) {
       'Host': 'api.m.jd.com',
       'Connection': 'keep-alive',
       'Content-Type': 'application/x-www-form-urlencoded',
-      "User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.2.2;14.2;%E4%BA%AC%E4%B8%9C/9.2.2 CFNetwork/1206 Darwin/20.1.0"),
+      "User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1"),
       'Accept-Language': 'zh-cn',
       'Accept-Encoding': 'gzip, deflate, br',
     }
   }
 }
 function getInfo(inviteId, flag = false) {
-  let body = {"lbsCity":"12","realLbsCity":"904","inviteId":inviteId,"headImg":"","userName":""}
+  let body = {"lbsCity":"19","realLbsCity":"1601","inviteId":inviteId,"headImg":"","userName":""}
   return new Promise((resolve) => {
     $.post(taskPostUrl("city_getHomeData",body), async (err, resp, data) => {
       try {
@@ -107,18 +142,28 @@ function getInfo(inviteId, flag = false) {
           console.log(`${$.name} API请求失败，请检查网路重试`)
         } else {
           if (safeGet(data)) {
+            // if (inviteId) $.log(`\n助力结果:\n${data}\n`)
             data = JSON.parse(data);
-            if (data.data && !data.data.result.userActBaseInfo.inviteId) {
-              console.log(`账号已黑，看不到邀请码`);
-            } else {
-              if (flag) console.log(`好友助力码：${data.data && data.data.result.userActBaseInfo.inviteId}`)
-            }
-            if (data.data) {
-              for(let vo of data.data.result && data.data.result.mainInfos || []){
-                console.log(vo.roundNum)
-                await receiveCash(vo.roundNum)
-                await $.wait(2*1000)
+            if (data.code === 0) {
+              if (data.data && data['data']['bizCode'] === 0) {
+                if (flag) console.log(`\n【京东账号${$.index}（${$.UserName}）的${$.name}好友互助码】${data.data && data.data.result.userActBaseInfo.inviteId}\n`);
+                for(let vo of data.data.result && data.data.result.mainInfos || []){
+                  if (vo && vo.remaingAssistNum === 0 && vo.status === "1") {
+                    console.log(vo.roundNum)
+                    await receiveCash(vo.roundNum)
+                    await $.wait(2*1000)
+                  }
+                }
+              } else {
+                console.log(`\n\n${inviteId ? '助力好友' : '获取邀请码'}失败:${data.data.bizMsg}`)
+                if (flag) {
+                  if (data.data && !data.data.result.userActBaseInfo.inviteId) {
+                    console.log(`账号已黑，看不到邀请码\n`);
+                  }
+                }
               }
+            } else {
+              console.log(`\n\ncity_getHomeData失败:${JSON.stringify(data)}\n`)
             }
           }
         }
@@ -187,14 +232,18 @@ function city_lotteryAward() {
           console.log(`${$.name} API请求失败，请检查网路重试`)
         } else {
           if (safeGet(data)) {
-            // data = JSON.parse(data);
-            console.log(data)
+            console.log(`抽奖结果：${data}`);
+            data = JSON.parse(data);
+            if (data['data']['bizCode'] === 0) {
+              const lotteryNum = data['data']['result']['lotteryNum'];
+              resolve(lotteryNum);
+            }
           }
         }
       } catch (e) {
         $.logErr(e, resp)
       } finally {
-        resolve(data);
+        resolve();
       }
     })
   })
@@ -202,7 +251,7 @@ function city_lotteryAward() {
 function readShareCode() {
   console.log(`开始`)
   return new Promise(async resolve => {
-    $.get({url: `http://bs.net/api/v2/jd/city/read/10/`, 'timeout': 10000}, (err, resp, data) => {
+    $.get({url: `http://share.turinglabs.net/api/v3/city/query/10/`, 'timeout': 10000}, (err, resp, data) => {
       try {
         if (err) {
           console.log(`${JSON.stringify(err)}`)
@@ -248,6 +297,9 @@ function requireConfig() {
     //Node.js用户请在jdCookie.js处填写京东ck;
     let shareCodes = [];
     if ($.isNode()) {
+      if (process.env.JD_CITY_EXCHANGE) {
+        exchangeFlag = process.env.JD_CITY_EXCHANGE || exchangeFlag;
+      }
       if (process.env.CITY_SHARECODES) {
         if (process.env.CITY_SHARECODES.indexOf('\n') > -1) {
           shareCodes = process.env.CITY_SHARECODES.split('\n');
@@ -281,7 +333,7 @@ function TotalBean() {
         "Connection": "keep-alive",
         "Cookie": cookie,
         "Referer": "https://wqs.jd.com/my/jingdou/my.shtml?sceneval=2",
-        "User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.2.2;14.2;%E4%BA%AC%E4%B8%9C/9.2.2 CFNetwork/1206 Darwin/20.1.0")
+        "User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1")
       }
     }
     $.post(options, (err, resp, data) => {
