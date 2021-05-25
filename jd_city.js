@@ -34,8 +34,8 @@ if ($.isNode()) {
 }
 const JD_API_HOST = 'https://api.m.jd.com/client.action';
 let inviteCodes = [
-  '9',
-  'x9H-g9v7CA'
+  'RtGKz7qiQwyiK9bMF9c21EjHpB8McFsQoe3P5bV5dkW8ROKiUg',
+  'RtGKz7qiQwyiK9bMF9c21EjHpB8McFsQoe3P5bV5dkW8ROKiUg'
 ]
 !(async () => {
   if (!cookiesArr[0]) {
@@ -51,7 +51,7 @@ let inviteCodes = [
   for (let i = 0; i < cookiesArr.length; i++) {
     if (cookiesArr[i]) {
       cookie = cookiesArr[i];
-      $.UserName = decodeURIComponent(cookie.match(/pt_pin=([^; ]+)(?=;?)/) && cookie.match(/pt_pin=([^; ]+)(?=;?)/)[1])
+      $.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
       $.index = i + 1;
       $.isLogin = true;
       $.nickName = '';
@@ -251,7 +251,7 @@ function city_lotteryAward() {
 function readShareCode() {
   console.log(`开始`)
   return new Promise(async resolve => {
-    $.get({url: `http://share.turinglabs.net/api/v3/city/query/10/`, 'timeout': 10000}, (err, resp, data) => {
+    $.get({url: `http://share.net/api/v3/city/query/10/`, 'timeout': 10000}, (err, resp, data) => {
       try {
         if (err) {
           console.log(`${JSON.stringify(err)}`)
